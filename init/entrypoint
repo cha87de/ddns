@@ -30,6 +30,7 @@ function writeConfigOptions(){
         | envsubst > /etc/bind/named.conf.local
 
     if [[ ! -f /opt/data/bind/db.${DDNS_DOMAIN} ]]; then
+        mkdir -p /opt/data/bind
         cat /etc/docker-config/ddns-domain.tmpl \
             | envsubst "$(env | sed -e 's/=.*//' -e 's/^/\$/g')" > /opt/data/bind/db.${DDNS_DOMAIN}
         chown -R bind:bind /opt/data/bind
