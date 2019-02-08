@@ -83,11 +83,13 @@ update add $subdomain.$dyndns 300 A $ip
 send
 EOF";
   // run DNS update
-  echo "/usr/bin/nsupdate -k /opt/data/keys/K$dyndns*.private $data\n";
+  #echo "/usr/bin/nsupdate -k /opt/data/keys/K$dyndns*.private $data\n";
   exec("/usr/bin/nsupdate -k /opt/data/keys/K$dyndns*.private $data", $cmdout, $ret);
   // check whether DNS update was successful
   if ($ret != 0){
     echo "Changing DNS for $subdomain.$dyndns to $ip failed with code $ret";
+  }else{
+    echo "success";
   }
 
 ?>
