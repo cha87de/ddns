@@ -45,6 +45,8 @@ function initKey(){
     fi
     mkdir -p /opt/data/keys ; cd /opt/data/keys
     dnssec-keygen -r /dev/urandom -a HMAC-MD5 -b 512 -n HOST $DDNS_DOMAIN
+    chgrp -R www-data /opt/data/keys/
+    chmod -R g+r /opt/data/keys/
 }
 function init(){
     # init bind keys for nsupdate
