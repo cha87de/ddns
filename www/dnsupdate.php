@@ -67,7 +67,8 @@
   
   // check whether user is allowed to change domain
   if ( ! ( isset($domain_auth[$subdomain]) && $domain_auth[$subdomain] == $auth_token) ) {
-	echo "Domain $subdomain is not allowed with specified token\n";
+  echo "Domain $subdomain is not allowed with specified token\n";
+  exit(0);
   }
         
   // shell escape all values
