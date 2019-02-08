@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# include bpkg  dependencies
+source /usr/local/bin/retry
+source /usr/local/bin/bgo
+source /usr/local/bin/bgowait
+
+##############################################################################
+# validate if all container variables are set
+##############################################################################
+function validate(){
+    vars="DDNS_DOMAIN DDNS_IPv4"
+    for var in $vars; do
+        if [[ $(env | awk -F "=" '{print $1}' | grep "^$var$") != "$var" ]]; then
+            echo "$var not set but required."
+            return 1
+        fi
+    done
+}
+
+##############################################################################
+# write config vars with configfile template
+##############################################################################
+function writeConfigOptions(){
+    echo "write config options"
+    export DDNS_DOMAIN=$DDNS_DOMAIN
+    export DDNS_IPv4=$DDNS_IPv4
+    export NSKEY=$NSKEY
+    cat /etc/docker-config/named.conf.local.tmpl \
+        | envsubst > /etc/bind/named.conf.local
+
+    if [[ ! -f /opt/data/bind/db.${DDNS_DOMAIN} ]]; then
+        cat /etc/docker-config/ddns-domain.tmpl \
+            | envsubst "$(env | sed -e 's/=.*//' -e 's/^/\$/g')" > /opt/data/bind/db.${DDNS_DOMAIN}
+        chown -R bind:bind /opt/data/bind
+    fi
+
+    echo -n $DDNS_DOMAIN > /opt/data/ddns-domain
+}
+function initKey(){
+    if [[ -d /opt/data/keys ]]; then
+        echo "skip init key, folder exists"
+        return 0
+    fi
+    mkdir -p /opt/data/keys ; cd /opt/data/keys
+    dnssec-keygen -r /dev/urandom -a HMAC-MD5 -b 512 -n HOST $DDNS_DOMAIN
+}
+function init(){
+    # init bind keys for nsupdate
+    initKey
+    export NSKEY=$(cat /opt/data/keys/K$DDNS_DOMAIN.*.private | grep "Key" | cut -d' ' -f2)
+
+    # write file based config options
+    writeConfigOptions
+}
+
+##############################################################################
+function start_bind(){
+    echo "starting bind ..."
+    named -f -u bind -d 1
+}
+function start_apache(){
+    echo "starting apache ..."
+    apachectl -DFOREGROUND
+}
+function start(){
+    echo "starting applications..."
+    bgo start_bind start_apache
+    if [[ $? != 0 ]]; then
+        echo "start failed. exiting now." >&2
+        exit 1
+    fi
+}
+
+##############################################################################
+#function configure(){
+#    echo "configure: ..."
+#    ## post-start configuration via service
+#}
+
+##############################################################################
+function main(){
+    # validate env vars
+    validate
+    if [[ $? != 0 ]]; then 
+        echo "validation failed. exiting now." >&2
+        exit 1
+    fi
+
+    # initialize
+    init
+    if [[ $? != 0 ]]; then 
+        echo "init failed. exiting now." >&2
+        exit 1
+    fi
+
+    # start
+    start 
+    if [[ $? != 0 ]]; then
+        echo "start failed. exiting now." >&2
+        exit 1
+    fi    
+
+    # configure
+#    retry 5 5 "configure failed." configure
+#    if [[ $? != 0 ]]; then
+#        echo "cannot run configure." >&2
+#        exit 1
+#    fi
+
+    # wait
+    echo "done. now waiting for services."
+    #freq=5; waitForN=-1; killTasks=0 # fail one, ignore (development mode)
+    freq=5; waitForN=1; killTasks=1 #fail one, fail all (production mode)
+    bgowait $freq $waitForN $killTasks
+}
+
+if [[ "$1" == "" ]]; then
+    main
+else
+    exec "$@"
+fi

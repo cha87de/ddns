@@ -1,0 +1,12 @@
+key "$DDNS_DOMAIN." {
+  algorithm hmac-md5;
+  secret "$NSKEY";
+};
+
+zone "$DDNS_DOMAIN" IN {
+	type master;
+	file "/opt/data/bind/db.$DDNS_DOMAIN";
+	allow-query { any; };
+	allow-transfer { none; };
+	allow-update { key "$DDNS_DOMAIN."; };
+};
