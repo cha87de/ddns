@@ -26,3 +26,24 @@ token2 for office.testdomain.local:
     "office": "token2"
 }]
 ```
+
+Use the official image on Docker hub, e.g. via docker-compose:
+
+```
+version: '2'
+services:
+  ddns:
+    image: cha87de/ddns:latest
+    environment:
+    - DDNS_DOMAIN=testdomain.local
+    - DDNS_IPv4="192.168.2.2"
+    volumes:
+    - /opt/storage/ddns/:/opt/data/
+    restart: always
+    ports:
+      - 8080:80
+      - 53:53/tcp
+      - 53:53/udp
+```
+
+To update the DNS entries, use e.g. curl via `curl "https://wherever-it-runs:8080/dnsupdate.php?AUTH_TOKEN=token1&DOMAIN=home[&FORCEIP=192.168.2.101]"`

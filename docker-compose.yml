@@ -1,0 +1,16 @@
+version: '2'
+services:
+  ddns:
+    image: cha87de/ddns:latest
+    environment:
+    - DDNS_DOMAIN=testdomain.local
+    - DDNS_IPv4="192.168.2.2"
+    volumes:
+    - /opt/storage/ddns/:/opt/data/
+    restart: always
+    ports:
+      - 8080:80
+      - 53:53/tcp
+      - 53:53/udp
+
+
