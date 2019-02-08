@@ -14,3 +14,15 @@ docker run --rm -ti \
     --name ddns \
     ddns
 ```
+
+Where DDNS_DOMAIN is the domain name for the DNS server and DDNS_IPv4 is the IP
+address for this DNS server. Next, define the dynamic subomains. Update the
+`domains.json` file accordingly, e.g. token1 for home.testdomain.local and
+token2 for office.testdomain.local:
+
+```
+[{
+    "home": "token1",
+    "office": "token2"
+}]
+```
