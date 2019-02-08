@@ -28,9 +28,16 @@
   // retrieve IP
   if ( isset($_REQUEST['FORCEIP'] ) ) {
     $ip = $_REQUEST['FORCEIP'];
-  }else{
+  }else if ( isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
+    // probably behind a load balancer ...
+    $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+  } else if ( isset($_SERVER['REMOTE_ADDR']) ){
     $ip = $_SERVER['REMOTE_ADDR'];
+  } else {
+    echo "failed to find remote IP.";
+    exit(0);
   }
+  
   // retrieve auth token
   if ( isset($_REQUEST['AUTH_TOKEN']) ){
     $auth_token = $_REQUEST['AUTH_TOKEN'];
